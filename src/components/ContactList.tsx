@@ -15,6 +15,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useNavigate } from "react-router-dom";
 import { ContactDetails } from "./ContactDetails";
+import axios from "axios";
+import { Store } from "../Store";
+import { toast } from "react-toastify";
 
 export default function ContactList() {
   const navigate = useNavigate();
@@ -23,10 +26,68 @@ export default function ContactList() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  const [currentId, setCurrentId] = React.useState("")
+  const [currentFirstName, setCurrentFirstName] = React.useState("")
+  const [currentLastName, setCurrentLastName] = React.useState("")
+  const [currentPhoneNumber, setCurrentPhoneNumber] = React.useState("")
+
+  const [contactList, setContactList] = React.useState<any>([]);
+
   const contacts = [
     { id: 1, name: "John Doe" },
     { id: 2, name: "Jane Doe" },
   ];
+
+  const { state, dispatch: ctxDispatch } = React.useContext(Store);
+  const { userInfo } = state;
+
+  React.useEffect(() => {
+    const getContacts = async () => {
+      try {
+        const config = {
+          headers: {
+            "Content-type": "application/json",
+          },
+        };
+        const response = await axios.get(
+          `http://localhost:8001/api/v1/contacts/getContacts/${userInfo?._id}`,
+          config
+        );
+        console.log(response.data)
+        setContactList(response.data);
+        console.log(contactList)
+      } catch (error: any) {
+        toast.error("Error occured while fetching contacts");
+      }
+    };
+    getContacts();
+  }, []);
+
+  const editContact = (id:any,firstName: any,lastName: any,phoneNumber: any) => {
+    navigate("/editcontact", { state: { id,firstName,lastName,phoneNumber } })
+  }
+
+  const deleteContact = async(id:string) => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      await axios.post(
+        "http://localhost:8001/api/v1/contacts/deleteContact",
+        {
+          id
+        },
+        config
+      );
+      toast.success("Contact successfully deleted");
+      
+      window.location.reload();
+    } catch (error:any) {
+      toast.error("error occured");
+    }
+  }
 
   return (
     <Box
@@ -85,89 +146,111 @@ export default function ContactList() {
             Add New Contact
           </Button>
         </Stack>
-        {contacts.map((contact) => (
-          <Stack
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-            key={contact.id}
-            direction="row"
-            spacing={2}
-          >
-            <Typography variant="body1">{contact.name}</Typography>
-            <Stack
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                gap: "10px",
-              }}
-            >
-              <Button
-                sx={(theme) => ({
-                  [theme.breakpoints.down("sm")]: {
-                    display: "none",
-                  },
-                })}
-                size="small"
-                variant="contained"
-                color="primary"
-                onClick={() => navigate("/editcontact")}
+        {contactList.length > 0 ? (
+          <>
+            {contactList.map((contact:any) => (
+              <Stack
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+                key={contact._id}
+                direction="row"
+                spacing={2}
               >
-                Edit
-              </Button>              
-              <Button
-                sx={(theme) => ({
-                  [theme.breakpoints.down("sm")]: {
-                    display: "none",
-                  },
-                })}
-                size="small"
-                variant="contained"
-                color="error"
-              >
-                Delete
-              </Button>
-              <Button
-                sx={(theme) => ({
-                  [theme.breakpoints.down("sm")]: {
-                    display: "none",
-                  },
-                })}
-                size="small"
-                variant="contained"
-                color="info"
-                onClick={handleOpen}
-              >
-                Details
-              </Button>
-            </Stack>
-            <Stack
-              sx={(theme) => ({
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: "10px",
-                [theme.breakpoints.up("sm")]: {
-                  display: "none",
-                },
-              })}
-            >
-              <IconButton aria-label="edit">
-                <EditIcon />
-              </IconButton>
-              <IconButton aria-label="delete">
-                <DeleteIcon />
-              </IconButton>
-              <IconButton aria-label="more details">
-                <MoreVertIcon />
-              </IconButton>
-            </Stack>
-          </Stack>
-        ))}
+                <Typography textTransform="capitalize" variant="body1">{contact.firstName} {contact.lastName} </Typography>
+                <Stack
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "10px",
+                  }}
+                >
+                  <Button
+                    sx={(theme) => ({
+                      [theme.breakpoints.down("sm")]: {
+                        display: "none",
+                      },
+                    })}
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    onClick={() => editContact(contact._id,contact.firstName,contact.lastName,contact.phoneNumber)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    sx={(theme) => ({
+                      [theme.breakpoints.down("sm")]: {
+                        display: "none",
+                      },
+                    })}
+                    size="small"
+                    variant="contained"
+                    color="error"
+                    onClick={() => deleteContact(contact._id)}
+                  >
+                    Delete
+                  </Button>
+                  <Button
+                    sx={(theme) => ({
+                      [theme.breakpoints.down("sm")]: {
+                        display: "none",
+                      },
+                    })}
+                    size="small"
+                    variant="contained"
+                    color="info"
+                    onClick={() => { 
+                      setCurrentId(contact._id);
+                      setCurrentFirstName(contact.firstName);
+                      setCurrentLastName(contact.lastName);
+                      setCurrentPhoneNumber(contact.phoneNumber);
+                      handleOpen()
+                    }}
+                  >
+                    Details
+                  </Button>
+                </Stack>
+                <Stack
+                  sx={(theme) => ({
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: "10px",
+                    [theme.breakpoints.up("sm")]: {
+                      display: "none",
+                    },
+                  })}
+                >
+                  <IconButton aria-label="edit">
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton aria-label="delete">
+                    <DeleteIcon />
+                  </IconButton>
+                  <IconButton aria-label="more details">
+                    <MoreVertIcon />
+                  </IconButton>
+                </Stack>
+              </Stack>
+            ))}
+          </>
+        ) : (
+          <p>No Contacts yet</p>
+        )}
       </Container>
-      <ContactDetails open={open} setOpen={setOpen} handleOpen={handleOpen} handleClose={handleClose} />
+      <ContactDetails
+        open={open}
+        currentId={currentId}
+        currentFirstName={currentFirstName}
+        currentLastName={currentLastName}
+        currentPhoneNumber={currentPhoneNumber}
+        setOpen={setOpen}
+        handleOpen={handleOpen}
+        handleClose={handleClose}
+      />
     </Box>
   );
 }

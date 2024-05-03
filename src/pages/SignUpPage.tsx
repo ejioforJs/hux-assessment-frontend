@@ -12,6 +12,10 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import axios from "axios"
+import { Store } from '../Store';
 
 function Copyright(props: any) {
   return (
@@ -30,13 +34,36 @@ function Copyright(props: any) {
 const defaultTheme = createTheme();
 
 export default function SignUpPage() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+  const [name, setName] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const navigate = useNavigate()
+
+  const {dispatch:ctxDispatch} = React.useContext(Store)
+
+  const handleSubmit = async() => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      const response = await axios.post(
+        "http://localhost:8001/api/v1/users/signup",
+        {
+          name,
+          email,
+          password
+        },
+        config
+      );
+      toast.success("Successfully signed up");
+      ctxDispatch({ type: "USER_SIGNIN", payload: response.data });
+      localStorage.setItem("userInfo", JSON.stringify(response.data));
+      navigate("/");
+    } catch (error:any) {
+      toast.error("invalid email or password");
+    }
   };
 
   return (
@@ -57,27 +84,17 @@ export default function SignUpPage() {
           <Typography component="h1" variant="h5">
             Sign up
           </Typography>
-          <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <Box component="form" sx={{ mt: 3 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  autoComplete="given-name"
-                  name="firstName"
-                  required
-                  fullWidth
-                  id="firstName"
-                  label="First Name"
-                  autoFocus
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
-                  id="lastName"
-                  label="Last Name"
-                  name="lastName"
-                  autoComplete="family-name"
+                  id="name"
+                  label="Name"
+                  name="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -87,7 +104,8 @@ export default function SignUpPage() {
                   id="email"
                   label="Email Address"
                   name="email"
-                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -98,12 +116,13 @@ export default function SignUpPage() {
                   label="Password"
                   type="password"
                   id="password"
-                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </Grid>
             </Grid>
             <Button
-              type="submit"
+              onClick={handleSubmit}
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}

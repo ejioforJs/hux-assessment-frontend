@@ -12,6 +12,10 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
+import { Store } from '../Store';
 
 function Copyright(props: any) {
   return (
@@ -30,13 +34,34 @@ function Copyright(props: any) {
 const defaultTheme = createTheme();
 
 export default function SignInPage() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const navigate = useNavigate()
+
+  const {dispatch:ctxDispatch} = React.useContext(Store)
+
+  const handleSubmit = async() => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      const response  = await axios.post(
+        "http://localhost:8001/api/v1/users/login",
+        {
+          email,
+          password
+        },
+        config
+      );
+      toast.success("Successfully Logged in");
+      ctxDispatch({ type: "USER_SIGNIN", payload: response.data });
+      localStorage.setItem("userInfo", JSON.stringify(response.data));
+      navigate("/");
+    } catch (error:any) {
+      toast.error("invalid email or password");
+    }
   };
 
   return (
@@ -57,7 +82,7 @@ export default function SignInPage() {
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <Box component="form" noValidate sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -65,8 +90,9 @@ export default function SignInPage() {
               id="email"
               label="Email Address"
               name="email"
-              autoComplete="email"
               autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -77,9 +103,11 @@ export default function SignInPage() {
               type="password"
               id="password"
               autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <Button
-              type="submit"
+              onClick={handleSubmit}
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}

@@ -6,12 +6,19 @@ import Fade from "@mui/material/Fade";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { Stack } from "@mui/material";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 interface CONTACTDETAILSPROPS {
   open: any;
   setOpen: any;
   handleOpen: any;
   handleClose: any;
+  currentId: string,
+  currentFirstName: string,
+  currentLastName: string,
+  currentPhoneNumber: any
 }
 
 const style = {
@@ -28,10 +35,37 @@ const style = {
 
 export const ContactDetails: React.FC<CONTACTDETAILSPROPS> = ({
   open,
-  setOpen,
-  handleOpen,
   handleClose,
+  currentId,
+  currentFirstName,
+  currentLastName,
+  currentPhoneNumber
 }) => {
+
+  const navigate = useNavigate()
+
+  const deleteContact = async() => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      await axios.post(
+        "http://localhost:8001/api/v1/contacts/deleteContact",
+        {
+          id: currentId
+        },
+        config
+      );
+      toast.success("Contact successfully deleted");
+      
+      window.location.reload();
+    } catch (error:any) {
+      toast.error("error occured");
+    }
+  }
+
   return (
     <div>
       <Modal
@@ -69,21 +103,21 @@ export const ContactDetails: React.FC<CONTACTDETAILSPROPS> = ({
                 <Typography sx={{ fontWeight: "bold", display: "inline" }}>
                   First Name:
                 </Typography>{" "}
-                James
+                {currentFirstName}
               </Typography>
               <Typography>
                 <Typography sx={{ fontWeight: "bold", display: "inline" }}>
                   Last Name:
                 </Typography>{" "}
-                Solomon
+                {currentLastName}
               </Typography>
               <Typography>
                 <Typography sx={{ fontWeight: "bold", display: "inline" }}>
                   Phone Number:
                 </Typography>{" "}
-                07032888613
+                {currentPhoneNumber}
               </Typography>
-              <Button sx={{mt: "15px"}} size="small" variant="contained" color="error">
+              <Button onClick={deleteContact} sx={{mt: "15px"}} size="small" variant="contained" color="error">
                 Delete Contact
               </Button>
             </Stack>

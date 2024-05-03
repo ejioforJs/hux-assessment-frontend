@@ -12,6 +12,7 @@ import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
 import ToggleColorMode from "./ToggleColorMode";
 import { useNavigate } from "react-router-dom";
+import { Store } from "../Store";
 
 const logoStyle = {
   width: "140px",
@@ -26,7 +27,10 @@ interface AppAppBarProps {
 
 function AppAppBar({ mode, toggleColorMode }: AppAppBarProps) {
   const [open, setOpen] = React.useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  const { state, dispatch: ctxDispatch } = React.useContext(Store);
+  const { userInfo } = state;
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -80,7 +84,13 @@ function AppAppBar({ mode, toggleColorMode }: AppAppBarProps) {
                   : "0 0 1px rgba(2, 31, 59, 0.7), 1px 1.5px 2px -1px rgba(2, 31, 59, 0.65), 4px 4px 12px -2.5px rgba(2, 31, 59, 0.65)",
             })}
           >
-            <p className={`${mode === "dark" ? "logoTextDark" : "logoText"} text-black `}>ContactHux</p>
+            <p
+              className={`${
+                mode === "dark" ? "logoTextDark" : "logoText"
+              } text-black `}
+            >
+              ContactHux
+            </p>
             <Box
               sx={{
                 display: { xs: "none", md: "flex" },
@@ -89,22 +99,42 @@ function AppAppBar({ mode, toggleColorMode }: AppAppBarProps) {
               }}
             >
               <ToggleColorMode mode={mode} toggleColorMode={toggleColorMode} />
-              <Button
-                color="primary"
-                variant="text"
-                size="small"
-                onClick={() => navigate("/signin")}
-              >
-                Sign in
-              </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                size="small"
-                onClick={() => navigate("/signup")}
-              >
-                Sign up
-              </Button>
+              {userInfo ? (
+                <Button color="primary" variant="text" size="small">
+                  {userInfo?.name}
+                </Button>
+              ) : (
+                <Button
+                  color="primary"
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate("/signin")}
+                >
+                  Sign in
+                </Button>
+              )}
+              {userInfo ? (
+                <Button
+                  color="primary"
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    localStorage.clear();
+                    navigate("/signin");
+                  }}
+                >
+                  logout
+                </Button>
+              ) : (
+                <Button
+                  color="primary"
+                  variant="contained"
+                  size="small"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign up
+                </Button>
+              )}
             </Box>
             <Box sx={{ display: { sm: "", md: "none" } }}>
               <Button
@@ -140,28 +170,46 @@ function AppAppBar({ mode, toggleColorMode }: AppAppBarProps) {
                   </Box>
                   <Divider />
                   <MenuItem className="mt-6">
-                    <Button
-                      color="primary"
-                      variant="contained"
-                      component="a"
-                      href="/material-ui/getting-started/templates/sign-up/"
-                      target="_blank"
-                      sx={{ width: "100%",marginTop:"40px" }}
-                    >
-                      Sign up
-                    </Button>
+                    {userInfo ? (
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        size="small"
+                        sx={{ width: "100%", marginTop: "40px" }}
+                        onClick={() => {
+                          localStorage.clear();
+                          navigate("/signin");
+                        }}
+                      >
+                        logout
+                      </Button>
+                    ) : (
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        size="small"
+                        sx={{ width: "100%", marginTop: "40px" }}
+                        onClick={() => navigate("/signup")}
+                      >
+                        Sign up
+                      </Button>
+                    )}
                   </MenuItem>
                   <MenuItem>
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      component="a"
-                      href="/material-ui/getting-started/templates/sign-in/"
-                      target="_blank"
-                      sx={{ width: "100%" }}
-                    >
-                      Sign in
-                    </Button>
+                    {userInfo ? (
+                      <Button color="primary" variant="text" size="small">
+                        {userInfo?.name}
+                      </Button>
+                    ) : (
+                      <Button
+                        color="primary"
+                        variant="text"
+                        size="small"
+                        onClick={() => navigate("/signin")}
+                      >
+                        Sign in
+                      </Button>
+                    )}
                   </MenuItem>
                 </Box>
               </Drawer>

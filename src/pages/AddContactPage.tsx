@@ -3,27 +3,51 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Store } from '../Store';
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function AddContactPage() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+  const [firstName, setFirstName] = React.useState("")
+  const [lastName, setLastName] = React.useState("")
+  const [phoneNumber, setPhoneNumber] = React.useState("")
+  const navigate = useNavigate()
+
+  const {state} = React.useContext(Store)
+  const {userInfo} = state
+
+  const handleSubmit = async() => {
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      await axios.post(
+        "http://localhost:8001/api/v1/contacts/addContact",
+        {
+          firstName,
+          lastName,
+          phoneNumber,
+          userId: userInfo?._id
+        },
+        config
+      );
+      toast.success("Contact successfully added");
+      
+      navigate("/");
+    } catch (error:any) {
+      toast.error("error occured");
+    }
   };
 
   return (
@@ -44,7 +68,7 @@ export default function AddContactPage() {
           <Typography component="h1" variant="h5">
             Add New Contact
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <Box component="form" noValidate sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -54,6 +78,8 @@ export default function AddContactPage() {
               name="firstName"
               autoComplete="firstName"
               autoFocus
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -63,7 +89,8 @@ export default function AddContactPage() {
               label="Last Name"
               name="lastName"
               autoComplete="lastName"
-              autoFocus
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
             />
             <TextField
               margin="normal"
@@ -73,10 +100,11 @@ export default function AddContactPage() {
               label="Phone Number"
               name="phoneNumber"
               autoComplete="phoneNumber"
-              autoFocus
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
             <Button
-              type="submit"
+              onClick={handleSubmit}
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
